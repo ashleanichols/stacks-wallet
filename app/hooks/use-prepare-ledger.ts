@@ -7,6 +7,7 @@ import { SUPPORTED_LEDGER_VERSION_MAJOR, SUPPORTED_LEDGER_VERSION_MINOR } from '
 import type { LedgerMessageEvents } from '../main/register-ledger-listeners';
 import { useListenLedgerEffect } from './use-listen-ledger-effect';
 import { messages$ } from './use-message-events';
+import { useCheckForUpdates } from './use-check-for-updates';
 
 export enum LedgerConnectStep {
   Disconnected,
@@ -29,6 +30,7 @@ export function usePrepareLedger() {
   const [step, setStep] = useState<LedgerConnectStep>(LedgerConnectStep.Disconnected);
   const [isLocked, setIsLocked] = useState(false);
   const [appVersion, setAppVersion] = useState<AppVersion | null>(null);
+  const { isNewerReleaseAvailable } = useCheckForUpdates();
 
   const isSupportedAppVersion = useMemo(() => {
     if (appVersion === null) return true;
@@ -40,11 +42,15 @@ export function usePrepareLedger() {
 
   const appVersionErrorText = useMemo(() => {
     return `
-      Make sure to upgrade your Stacks app to the latest version in Ledger Live.
+      Make sure to upgrade your Stacks app to the latest version in Ledger Live. ${
+        isNewerReleaseAvailable
+          ? 'You should also upgrade your Stacks Wallet to the latest version.'
+          : ''
+      }
       This version of the Stacks Wallet only works with ${SUPPORTED_LEDGER_VERSION_MAJOR}.${SUPPORTED_LEDGER_VERSION_MINOR}.
       Detected version ${String(appVersion?.major)}.${String(appVersion?.minor)}
     `;
-  }, [appVersion]);
+  }, [appVersion?.major, appVersion?.minor, isNewerReleaseAvailable]);
 
   useListenLedgerEffect();
 
